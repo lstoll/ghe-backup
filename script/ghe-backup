@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
-if [[ -f /data/github/shared/env.d/*smtp.sh ]]; then
-  . /data/github/shared/env.d/*smtp.sh
+# Force working dir
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd $SCRIPT_DIR/..
+
+if [[ -f /data/github/shared/env.d/00-smtp.sh ]]; then
+  . /data/github/shared/env.d/00-smtp.sh
+  export SMTP_CONFIG_SET=1
 else
   echo 'This node has no SMTP config, alerting is not going to work'
 fi
