@@ -17,7 +17,6 @@ Model.new(:ghe, 'Description for ghe') do
   S3_ACCESS_KEY = ENV['S3_ACCESS_KEY'] || raise("S3_ACCESS_KEY required")
   S3_SECRET_KEY = ENV['S3_SECRET_KEY'] || raise("S3_SECRET_KEY required")
   S3_BUCKET     = ENV['S3_BUCKET'] || raise("S3_BUCKET required")
-  S3_PATH       = ENV['S3_PATH']
 
 
   # Prep the backup - we need to get exports of all the data
@@ -95,8 +94,8 @@ Model.new(:ghe, 'Description for ghe') do
     # s3.use_iam_profile = true
 
     s3.region            = S3_REGION
-    s3.bucket            = S3_BACKUP
-    s3.path              = S3_PATH
+    s3.bucket            = S3_BUCKET
+    # s3.path              = S3_PATH
   end
 
   ##
