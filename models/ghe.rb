@@ -78,7 +78,7 @@ Model.new(:ghe, 'Description for ghe') do
   #
   #   archive.root '/path/to/archive/root'
   #
-  archive :my_archive do |archive|
+  archive :ghe_instance_dump do |archive|
     # Run the `tar` command using `sudo`
     # archive.use_sudo
     archive.add STAGING_PATH
