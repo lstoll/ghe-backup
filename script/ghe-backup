@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+if [[ -f /data/github/shared/env.d/*smtp.sh ]]; then
+  . /data/github/shared/env.d/*smtp.sh
+else
+  echo 'This node has no SMTP config, alerting is not going to work'
+fi
