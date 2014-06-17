@@ -25,20 +25,22 @@ Model.new(:ghe, 'Description for ghe') do
     FileUtils.mkdir_p(STAGING_PATH)
 
     export_commands = [
-      'ghe-export-repositories > ghe-repositories-backup.tar',
-      'ghe-export-pages > ghe-pages-backup.tar',
-      'ghe-export-mysql | gzip > ghe-mysql-backup.sql.gz',
-      'ghe-export-redis > ghe-redis-backup.rdb',
-      'ghe-export-authorized-keys > ghe-authorized-keys-backup.json',
-      'ghe-export-ssh-host-keys > ghe-ssh-host-keys-backup.tar',
-      'ghe-export-es-indices > ghe-es-indices-backup.tar',
-      'ghe-export-settings > settings.json'
+      {:command => 'ghe-export-repositories > ghe-repositories-backup.tar'},
+      {:command => 'ghe-export-pages > ghe-pages-backup.tar', :ignore_errors => true},
+      {:command => 'ghe-export-mysql | gzip > ghe-mysql-backup.sql.gz'},
+      {:command => 'ghe-export-redis > ghe-redis-backup.rdb'},
+      {:command => 'ghe-export-authorized-keys > ghe-authorized-keys-backup.json'},
+      {:command => 'ghe-export-ssh-host-keys > ghe-ssh-host-keys-backup.tar'},
+      {:command => 'ghe-export-es-indices > ghe-es-indices-backup.tar'},
+      {:command => 'ghe-export-settings > settings.json'}
     ]
 
     Dir.chdir(STAGING_PATH) do |stage_dir|
       export_commands.each do |export_command|
-        unless system(export_command)
-          raise RuntimeError.new("Command #{export_command} failed to execute")
+        if !system(export_command[:command])
+          if !export_command[:ignore_errors]
+            raise RuntimeError.new("Command #{export_command} failed to execute")
+          end
         end
       end
     end
