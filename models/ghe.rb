@@ -12,11 +12,14 @@ require 'fileutils'
 #
 Model.new(:ghe, 'Description for ghe') do
 
-  STAGING_PATH  = ENV['STAGING_PATH'] || File.join(Dir.tmpdir, 'ghe-stage')
-  S3_REGION     = ENV['S3_REGION'] || 'us-east-1'
-  S3_ACCESS_KEY = ENV['S3_ACCESS_KEY'] || raise("S3_ACCESS_KEY required")
-  S3_SECRET_KEY = ENV['S3_SECRET_KEY'] || raise("S3_SECRET_KEY required")
-  S3_BUCKET     = ENV['S3_BUCKET'] || raise("S3_BUCKET required")
+  STAGING_PATH       = ENV['STAGING_PATH'] || File.join(Dir.tmpdir, 'ghe-stage')
+  S3_REGION          = ENV['S3_REGION'] || 'us-east-1'
+  S3_ACCESS_KEY      = ENV['S3_ACCESS_KEY'] || raise("S3_ACCESS_KEY required")
+  S3_SECRET_KEY      = ENV['S3_SECRET_KEY'] || raise("S3_SECRET_KEY required")
+  S3_BUCKET          = ENV['S3_BUCKET'] || raise("S3_BUCKET required")
+  SMTP_CONFIG_SET    = ENV['SMTP_CONFIG_SET']
+  NOTIFICATION_EMAIL = ENV['NOTIFICATION_EMAIL']
+  NOTIFY_ON_SUCCESS  = ENV['NOTIFY_ON_SUCCESS']
 
 
   # Prep the backup - we need to get exports of all the data
@@ -110,21 +113,24 @@ Model.new(:ghe, 'Description for ghe') do
   #
   # The default delivery method for Mail Notifiers is 'SMTP'.
   # See the documentation for other delivery options.
-  #
-  # notify_by Mail do |mail|
-  #   mail.on_success           = true
-  #   mail.on_warning           = true
-  #   mail.on_failure           = true
-  #
-  #   mail.from                 = "sender@email.com"
-  #   mail.to                   = "receiver@email.com"
-  #   mail.address              = "smtp.gmail.com"
-  #   mail.port                 = 587
-  #   mail.domain               = "your.host.name"
-  #   mail.user_name            = "sender@email.com"
-  #   mail.password             = "my_password"
-  #   mail.authentication       = "plain"
-  #   mail.encryption           = :starttls
-  # end
+
+  if SMTP_CONFIG_SET && NOTIFICATION_EMAIL
+    notify_by Mail do |mail|
+      mail.on_success           = NOTIFY_ON_SUCCESS
+      mail.on_warning           = true
+      mail.on_failure           = true
+      mail.send_log_on          = [:success, :warning, :failure]
+
+      mail.from                 = ENV['ENTERPRISE_NOREPLY_ADDRESS']
+      mail.to                   = NOTIFICATION_EMAIL
+      mail.address              = ENV['ENTERPRISE_SMTP_ADDRESS']
+      mail.port                 = ENV['ENTERPRISE_SMTP_PORT']
+      mail.domain               = ENV['ENTERPRISE_SMTP_DOMAIN']
+      mail.user_name            = ENV['ENTERPRISE_SMTP_USER_NAME']
+      mail.password             = ENV['ENTERPRISE_SMTP_PASSWORD']
+      mail.authentication       = ENV['ENTERPRISE_SMTP_AUTHENTICATION']
+      mail.encryption           = ENV['ENTERPRISE_SMTP_ENABLE_STARTTLS_AUTO'] ? :starttls : nil
+    end
+  end
 
 end
