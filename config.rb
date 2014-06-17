@@ -1,5 +1,8 @@
 # encoding: utf-8
 
+require 'dotenv'
+Dotenv.load
+
 ##
 # Backup v4.x Configuration
 #
