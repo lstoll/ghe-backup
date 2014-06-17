@@ -1,4 +1,5 @@
 # encoding: utf-8
+require 'fileutils'
 
 ##
 # Backup Generated: ghe
@@ -10,6 +11,44 @@
 # http://meskyanichi.github.io/backup
 #
 Model.new(:ghe, 'Description for ghe') do
+
+  STAGING_PATH  = ENV['STAGING_PATH'] || File.join(Dir.tmpdir, 'ghe-stage')
+  S3_REGION     = ENV['S3_REGION'] || 'us-east-1'
+  S3_ACCESS_KEY = ENV['S3_ACCESS_KEY'] || raise("S3_ACCESS_KEY required")
+  S3_SECRET_KEY = ENV['S3_SECRET_KEY'] || raise("S3_SECRET_KEY required")
+  S3_BUCKET     = ENV['S3_BUCKET'] || raise("S3_BUCKET required")
+  S3_PATH       = ENV['S3_PATH']
+
+
+  # Prep the backup - we need to get exports of all the data
+  before do
+    FileUtils.mkdir_p(STAGING_PATH)
+
+    export_commands = [
+      'ghe-export-repositories > ghe-repositories-backup.tar',
+      'ghe-export-pages > ghe-pages-backup.tar',
+      'ghe-export-mysql | gzip > ghe-mysql-backup.sql.gz',
+      'ghe-export-redis > ghe-redis-backup.rdb',
+      'ghe-export-authorized-keys > ghe-authorized-keys-backup.json',
+      'ghe-export-ssh-host-keys > ghe-ssh-host-keys-backup.tar',
+      'ghe-export-es-indices > ghe-es-indices-backup.tar',
+      'ghe-export-settings > settings.json'
+    ]
+
+    Dir.chdir(STAGING_PATH) do |stage_dir|
+      export_commands.each do |export_command|
+        unless system(export_command)
+          raise RuntimeError.new("Command #{export_command} failed to execute")
+        end
+      end
+    end
+  end
+
+  # Clean up the temp staging stuff
+  after do
+    FileUtils.rm_r(STAGING_PATH)
+  end
+
   ##
   # Split [Splitter]
   #
@@ -40,10 +79,7 @@ Model.new(:ghe, 'Description for ghe') do
   archive :my_archive do |archive|
     # Run the `tar` command using `sudo`
     # archive.use_sudo
-    archive.add "/path/to/a/file.rb"
-    archive.add "/path/to/a/folder/"
-    archive.exclude "/path/to/a/excluded_file.rb"
-    archive.exclude "/path/to/a/excluded_folder"
+    archive.add STAGING_PATH
   end
 
   ##
@@ -51,14 +87,14 @@ Model.new(:ghe, 'Description for ghe') do
   #
   store_with S3 do |s3|
     # AWS Credentials
-    s3.access_key_id     = "my_access_key_id"
-    s3.secret_access_key = "my_secret_access_key"
+    s3.access_key_id     = S3_ACCESS_KEY
+    s3.secret_access_key = S3_SECRET_KEY
     # Or, to use a IAM Profile:
     # s3.use_iam_profile = true
 
-    s3.region            = "us-east-1"
-    s3.bucket            = "bucket-name"
-    s3.path              = "path/to/backups"
+    s3.region            = S3_REGION
+    s3.bucket            = S3_BACKUP
+    s3.path              = S3_PATH
   end
 
   ##
@@ -72,20 +108,20 @@ Model.new(:ghe, 'Description for ghe') do
   # The default delivery method for Mail Notifiers is 'SMTP'.
   # See the documentation for other delivery options.
   #
-  notify_by Mail do |mail|
-    mail.on_success           = true
-    mail.on_warning           = true
-    mail.on_failure           = true
-
-    mail.from                 = "sender@email.com"
-    mail.to                   = "receiver@email.com"
-    mail.address              = "smtp.gmail.com"
-    mail.port                 = 587
-    mail.domain               = "your.host.name"
-    mail.user_name            = "sender@email.com"
-    mail.password             = "my_password"
-    mail.authentication       = "plain"
-    mail.encryption           = :starttls
-  end
+  # notify_by Mail do |mail|
+  #   mail.on_success           = true
+  #   mail.on_warning           = true
+  #   mail.on_failure           = true
+  #
+  #   mail.from                 = "sender@email.com"
+  #   mail.to                   = "receiver@email.com"
+  #   mail.address              = "smtp.gmail.com"
+  #   mail.port                 = 587
+  #   mail.domain               = "your.host.name"
+  #   mail.user_name            = "sender@email.com"
+  #   mail.password             = "my_password"
+  #   mail.authentication       = "plain"
+  #   mail.encryption           = :starttls
+  # end
 
 end
