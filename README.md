@@ -17,3 +17,4 @@ Required variables:
 Optional variables:
 
 * `NOTIFICATION_EMAIL` - e-mail address to notify on failure
+* `NOTIFY_ON_SUCCESS`  - send email on successful backup (defaults to on error only)
