@@ -21,6 +21,8 @@ Model.new(:ghe, 'Description for ghe') do
 
   # Prep the backup - we need to get exports of all the data
   before do
+    # Make sure we have a clean slate
+    FileUtils.rm_r(STAGING_PATH)
     FileUtils.mkdir_p(STAGING_PATH)
 
     export_commands = [
