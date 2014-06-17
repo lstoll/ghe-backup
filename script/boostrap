@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo '--> Bundling gems'
+
+bundle install --binstubs bin --path vendor/bundle
